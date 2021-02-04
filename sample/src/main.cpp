@@ -4,7 +4,7 @@
 #include "LiquidCrystal.h"
 #include "Keypad.h"
 
-#define SOP '<'
+#define SOP '<' 
 #define EOP '>'
 #define INTERRUPT_BUTTON 13
 
@@ -99,8 +99,9 @@ namespace third_exercise {
     char key = 0;
 
     void validate_input() {
-        key = keypad.getKey();
+        scanf("%c", &key);
         if(key != 0) {
+            lcd.clear();
             for(unsigned int i = 0; i < sizeof(invalidKeys); i++) {
                 if(key == invalidKeys[i]) {
                     digitalWrite(second_exercise::led, LOW);
@@ -108,8 +109,7 @@ namespace third_exercise {
                     digitalWrite(second_exercise::led, HIGH);
                     delay(100);
                     digitalWrite(second_exercise::led, LOW);
-                    lcd.clear();
-                    lcd.print("WRONG CHAR");
+                    printf("WRONG CHAR");
                     break;
                 } else if(i == sizeof(invalidKeys) - 1) {
                     digitalWrite(first_exercise::led, LOW);
@@ -117,8 +117,7 @@ namespace third_exercise {
                     digitalWrite(first_exercise::led, HIGH);
                     delay(100);
                     digitalWrite(first_exercise::led, LOW);
-                    lcd.clear();
-                    lcd.print(key);
+                    printf(&key);
                 }
             }
             key = 0;
@@ -126,21 +125,35 @@ namespace third_exercise {
     }
 }
 
-int my_putChar(char c, FILE * f) {
-    return Serial.write(c);
+namespace serial {
+    int my_putChar(char c, FILE * f) {
+        return Serial.write(c);
+    }
+
+    int my_getChar(FILE * f) {
+        while (!Serial.available());
+        return Serial.read();
+    }
+
+    FILE * stream = fdevopen(my_putChar, my_getChar);
 }
 
-int my_getChar(FILE * f) {
-    while (!Serial.available());
-    return Serial.read();
-}
+namespace liquid_crystal {
+    int my_putChar(char c, FILE * f) {
+        return third_exercise::lcd.write(c);
+    }
 
+    int my_getChar(FILE * f) {
+        return third_exercise::keypad.getKey();
+    }
+
+    FILE * stream = fdevopen(my_putChar, my_getChar);
+}
 
 
 void setup() {
     Serial.begin(9600);
-    FILE * my_stream = fdevopen(my_putChar, my_getChar);
-    stdin = stdout = my_stream;
+    stdin = stdout = serial::stream;
 
     pinMode(INTERRUPT_BUTTON, INPUT);
     pinMode(first_exercise::button, INPUT);
@@ -149,9 +162,15 @@ void setup() {
     
     digitalWrite(first_exercise::led, LOW);
     third_exercise::lcd.begin(16, 2);
+
+    printf("\r!!! PRESS THE INTERRUPT BUTTON TO START !!! \r\r");
+    while(true) {
+        if(digitalRead(INTERRUPT_BUTTON) == HIGH) break;
+    }
 }
 
 void loop() {
+    stdin = stdout = serial::stream;
     int option;
     printf("\rMENU\r");
     printf("1. Button LED switching;\r");
@@ -175,10 +194,13 @@ void loop() {
         }
         printf("Function stopped!\r");
     } else if(option == 3) {
-        printf("Option 3 chosen\r");
+        printf("Option 3 chosen\rBug: lcd prints random symbols\r");
+        stdin = stdout = liquid_crystal::stream;
+        printf("HELLO");
         while(digitalRead(INTERRUPT_BUTTON) != LOW) {
             third_exercise::validate_input();
         }
+        stdin = stdout = serial::stream;
         printf("Interrupt button pressed!\r");
     }
 }
