@@ -31,7 +31,6 @@ Uses wrappers around Serial I/O for calling stdio.h functions.
 Printing characters from the keypad to the LCD.
 Like the previous exercise, uses stdio.h wrappers around LCD printing and keypad reading functions.
 Also uses [LiquidCrystal.h](https://www.arduino.cc/en/Reference/LiquidCrystal) and [Keypad.h](https://www.arduino.cc/reference/en/libraries/keypad/).
-Bug: keypad characters are written with auxilliary random symbols to the LCD. Using <i>Serial.print()</i> works just fine.
 
 ## Topic II
 To be continued..
