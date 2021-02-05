@@ -101,7 +101,8 @@ namespace third_exercise {
     void validate_input() {
         scanf("%c", &key);
         if(key != 0) {
-            lcd.clear();
+            //lcd.clear();
+            lcd.setCursor(0, 0);
             for(unsigned int i = 0; i < sizeof(invalidKeys); i++) {
                 if(key == invalidKeys[i]) {
                     digitalWrite(second_exercise::led, LOW);
@@ -109,7 +110,7 @@ namespace third_exercise {
                     digitalWrite(second_exercise::led, HIGH);
                     delay(100);
                     digitalWrite(second_exercise::led, LOW);
-                    printf("WRONG CHAR");
+                    printf("      NaN   ");
                     break;
                 } else if(i == sizeof(invalidKeys) - 1) {
                     digitalWrite(first_exercise::led, LOW);
@@ -117,7 +118,10 @@ namespace third_exercise {
                     digitalWrite(first_exercise::led, HIGH);
                     delay(100);
                     digitalWrite(first_exercise::led, LOW);
+                    printf("You chose: ");
                     printf(&key);
+                    lcd.setCursor(12, 0);
+                    printf("  ");
                 }
             }
             key = 0;
