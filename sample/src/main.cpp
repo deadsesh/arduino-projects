@@ -4,29 +4,29 @@
 #include "LiquidCrystal.h"
 #include "Keypad.h"
 
-#define SOP '<' 
-#define EOP '>'
-#define INTERRUPT_BUTTON 13
+#define SOP '<'                 //start of parse
+#define EOP '>'                 //end of parse
+#define INTERRUPT_BUTTON 13     //button used for starting the program and stopping ex 1 & 3
 
 namespace first_exercise {
     /* 
     * sa se proiecteze o apliatie in baza de MCU 
     * care ar schimba starea unui LED la detectarea apasarii unui buton
     */
-    const int led = 11;
+    const int led = 11;         //pin declaration, button state
     const int button = 10;
     bool state = false;
 
     void switch_led() {
         if(digitalRead(button) == LOW) {
-            state = !state;
+            state = !state;     //self explanatory
         }
         if(state) {
             digitalWrite(led, HIGH);
         } else {
             digitalWrite(led, LOW);
         }
-        delay(1000);
+        delay(1000);            //delay needed for the led to not react to input too fast
     }
 }
 
@@ -38,13 +38,12 @@ namespace second_exercise {
     * - pentru schimbul de text prin terminal a se utiliza libraia STDIO
     */
     const int led = 12;
-    bool run = true;
 
     bool switch_led() {
-        char * command = new char[7], tmp;
+        char* command = new char[7], tmp;       //charr array for the pn/off command, tmp used for parsing the input character-by-character
         scanf("%c", &tmp);
-        printf(&tmp);
-        if(tmp == SOP) {
+        printf(&tmp);                           //used to print input to the terminal since it's not usually printed
+        if(tmp == SOP) {                        //commands begin with SOP
             int i = 0;
             scanf("%c", &tmp);
             printf(&tmp);
@@ -54,21 +53,21 @@ namespace second_exercise {
                 printf(&tmp);
             }
         }
-        if(strcmp(command, "led on") == 0) {
+        if(strcmp(command, "led on") == 0) {    //command for turning led on
             printf("\rTurning led on..\r");
             digitalWrite(led, HIGH);
         } else if(strcmp(command, "led off") == 0) {
-            printf("\rTurning led off..\r");
+            printf("\rTurning led off..\r");    //command for turning led off
             digitalWrite(led, LOW);
         } else if(strcmp(command, "quit") == 0) {
-            printf("\rStopping function..\r");
-            return false;
-        } else if(strcmp(command, "\r") != 0) {
-            printf("\r:)\r");
+            printf("\rStopping function..\r");  //command for going back to menu
+            return false;                       //returns false so the rogram isn't stuck in wait state permanently
+        } else if(strcmp(command, "\r") != 0) { //catch random \r 
+            //do nothing
         } else {
             printf("\rInvalid command\r");
         }
-        return true;    
+        return true;                            //returns true to continue running this function
     }
 }
 
@@ -79,30 +78,29 @@ namespace third_exercise {
     * - pentru cod valid sa se aprinda un led de culoare verde, pentru cod invalid, un led de culoare rosie.
     * - a se utiliza STDIO pentru scanarea tastaturii si afisare la LCD.
     */
-    LiquidCrystal lcd(A0, A1, A2, A3, A4, A5);
-    const byte rows = 4;
-    const byte cols = 4;
-    const char keys[rows][cols] = {
+    LiquidCrystal lcd(A0, A1, A2, A3, A4, A5);  //lcd connections
+    const byte rows = 4;                        //keypad rows
+    const byte cols = 4;                        //keypad columns
+    const char keys[rows][cols] = {             //keypad layout
         {'7', '8', '9', '/'},
         {'4', '5', '6', '*'},
         {'1', '2', '3', '-'},
         {'C', '0', '=', '+'}
     };
-    const char invalidKeys[] = {
+    const char invalidKeys[] = {                //positions of NaN buttons
         keys[0][3], keys[1][3], keys[2][3], 
         keys[3][3], keys[3][2], keys[3][0]
     };
-    byte rowPins[rows] = {9, 8, 7, 6};
-    byte colPins[cols] = {5, 4, 3, 2};
+    byte rowPins[rows] = {9, 8, 7, 6};          //first 4 pins, used for row validation
+    byte colPins[cols] = {5, 4, 3, 2};          //second 4 pins, used for col validation
 
     Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, rows, cols);
-    char key = 0;
+    char key = 0;                               //current key pressed
 
     void validate_input() {
-        scanf("%c", &key);
+        scanf("%c", &key);                      //read pressed key
         if(key != 0) {
-            //lcd.clear();
-            lcd.setCursor(0, 0);
+            lcd.setCursor(0, 0);                //set cursor so the output doesn't get mixed up, lcd.clear() not used so it won't flash
             for(unsigned int i = 0; i < sizeof(invalidKeys); i++) {
                 if(key == invalidKeys[i]) {
                     digitalWrite(second_exercise::led, LOW);
@@ -110,7 +108,7 @@ namespace third_exercise {
                     digitalWrite(second_exercise::led, HIGH);
                     delay(100);
                     digitalWrite(second_exercise::led, LOW);
-                    printf("      NaN   ");
+                    printf("      NaN     ");   //flash the red led and print NaN along with some whitespaces
                     break;
                 } else if(i == sizeof(invalidKeys) - 1) {
                     digitalWrite(first_exercise::led, LOW);
@@ -118,10 +116,10 @@ namespace third_exercise {
                     digitalWrite(first_exercise::led, HIGH);
                     delay(100);
                     digitalWrite(first_exercise::led, LOW);
-                    printf("You chose: ");
+                    printf("You chose: ");      //flash the green led and print the pressed key 
                     printf(&key);
                     lcd.setCursor(12, 0);
-                    printf("  ");
+                    printf("    ");             //print whitespaces to clear lcd output from artifacts
                 }
             }
             key = 0;
@@ -129,7 +127,7 @@ namespace third_exercise {
     }
 }
 
-namespace serial {
+namespace serial {              //stdio wrapper for serial i/o
     int my_putChar(char c, FILE * f) {
         return Serial.write(c);
     }
@@ -142,7 +140,7 @@ namespace serial {
     FILE * stream = fdevopen(my_putChar, my_getChar);
 }
 
-namespace liquid_crystal {
+namespace liquid_crystal {      //stdio wrapper for lcd input, kp output
     int my_putChar(char c, FILE * f) {
         return third_exercise::lcd.write(c);
     }
@@ -157,7 +155,6 @@ namespace liquid_crystal {
 
 void setup() {
     Serial.begin(9600);
-    stdin = stdout = serial::stream;
 
     pinMode(INTERRUPT_BUTTON, INPUT);
     pinMode(first_exercise::button, INPUT);
@@ -174,32 +171,33 @@ void setup() {
 }
 
 void loop() {
-    stdin = stdout = serial::stream;
+    stdin = stdout = serial::stream;            //stdio will be originally used for serial io
     int option;
     printf("\rMENU\r");
     printf("1. Button LED switching;\r");
     printf("2. Terminal LED switching;\r");
-    printf("3. Keyboard input validation;\r");
+    printf("3. Keyboard input validation;\r\r");
     printf("IMPORTANT: The interrupt button should be used to quit 1 & 3, use <quit> to stop 2.\r");
 
     scanf("%d", &option);
 
     if(option == 1) {
-        printf("Option 1 chosen\r");
+        printf("Option 1 chosen!\r");
         while(digitalRead(INTERRUPT_BUTTON) != LOW) {
             first_exercise::switch_led();
         }
         printf("Interrupt button pressed!\r");
     } else if(option == 2) {
-        printf("Option 2 chosen\r");
+        printf("Option 2 chosen!\r");
         while(true) {
             bool running = second_exercise::switch_led();
             if(!running) break;
         }
         printf("Function stopped!\r");
     } else if(option == 3) {
-        printf("Option 3 chosen\rBug: lcd prints random symbols\r");
-        stdin = stdout = liquid_crystal::stream;
+        printf("Option 3 chosen!\r");
+
+        stdin = stdout = liquid_crystal::stream;    //switching to lcd/kp i/o everytime it's necessary
         printf("HELLO");
         while(digitalRead(INTERRUPT_BUTTON) != LOW) {
             third_exercise::validate_input();
